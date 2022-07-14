@@ -12,7 +12,16 @@ function App() {
 	const [message, setMessage] = useState('');
 
 	const userIsLoggedIn = () => {
-		return Object.keys(currentUser).length > 0;
+		return currentUser.username !== 'anonymousUser';
+		// return Object.keys(currentUser).length > 0;
+	};
+
+	const currentUserIsInAccessGroup = (accessGroup) => {
+		if (currentUser.accessGroups) {
+			return currentUser.accessGroups.includes(accessGroup);
+		} else {
+			return false;
+		}
 	};
 
 	const getJobSources = () => {
@@ -37,7 +46,22 @@ function App() {
 				setCurrentUser(data.user);
 				getJobSources();
 			} else {
-				setCurrentUser({});
+				const response = await fetch(backend_base_url + '/login', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({
+						username: 'anonymousUser',
+						password: 'anonymousUser123',
+					}),
+				});
+				if (response.ok) {
+					const data = await response.json();
+					getJobSources();
+					setCurrentUser(data.user);
+					localStorage.setItem('token', data.token);
+				} else {
+					setMessage('bad login');
+				}
 			}
 		})();
 	}, []);
@@ -63,13 +87,29 @@ function App() {
 
 	const handleLogoutButton = () => {
 		localStorage.removeItem('token');
-		setCurrentUser({});
+		setCurrentUser({username: 'anonymousUser'});
 	};
 
 	return (
 		<div className="App">
 			<>
 				<h1>EJ2 Job Manager</h1>
+				<div className="loggedInInfo">
+					{userIsLoggedIn() && (
+						<div>
+							Logged in: {currentUser.firstName}{' '}
+							{currentUser.lastName}
+						</div>
+					)}
+				</div>
+				<div className="info">
+					{currentUserIsInAccessGroup('administrators') && (
+						<div>info for administrators</div>
+					)}
+					{currentUserIsInAccessGroup('jobSeekers') && (
+						<div>new job information for job seekers</div>
+					)}
+				</div>
 				{userIsLoggedIn() ? (
 					<>
 						<p>There are {jobSources.length} job sources:</p>
