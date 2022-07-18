@@ -2,18 +2,20 @@ import { useState, useEffect } from 'react';
 import './App.scss';
 import axios from 'axios';
 
-const backend_base_url = 'http://localhost:3045';
+const backend_base_url = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3045';
 
 function App() {
 	const [jobSources, setJobSources] = useState([]);
-	const [currentUser, setCurrentUser] = useState({});
+	const [currentUser, setCurrentUser] = useState({
+		username: 'anonymousUser',
+		accessGroups: ['loggedOutUsers'],
+	});
 	const [username, setUsername] = useState('');
 	const [password, setPassword] = useState('');
 	const [message, setMessage] = useState('');
 
 	const userIsLoggedIn = () => {
 		return currentUser.username !== 'anonymousUser';
-		// return Object.keys(currentUser).length > 0;
 	};
 
 	const currentUserIsInAccessGroup = (accessGroup) => {
@@ -87,7 +89,10 @@ function App() {
 
 	const handleLogoutButton = () => {
 		localStorage.removeItem('token');
-		setCurrentUser({username: 'anonymousUser'});
+		setCurrentUser({
+			username: 'anonymousUser',
+			accessGroups: ['loggedOutUsers'],
+		});
 	};
 
 	return (
